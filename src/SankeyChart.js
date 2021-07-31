@@ -1,5 +1,5 @@
 import * as d3 from "d3";
-import sankeyChart from "./lib/sankey-chart";
+import sankeyChart from "./lib/sankey-chart-lib";
 
 import React, { useEffect } from "react";
 
