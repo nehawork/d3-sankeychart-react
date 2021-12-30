@@ -2,6 +2,7 @@ import * as d3 from "d3";
 import sankeyChart from "./lib/sankey-chart-lib";
 
 import React, { useEffect } from "react";
+import sankeyChartData from "./lib/data";
 
 export default function SankeyChart() {
   useEffect(() => {
@@ -39,119 +40,103 @@ export default function SankeyChart() {
       .size([width, height]);
 
     var path = sankey.link();
-    const dataPromise = d3.json("chart-data.json");
-    console.log(dataPromise);
-    // load the data
-    dataPromise.then((graph) => {
-      var nodeMap = {};
-      graph.nodes.forEach(function (x) {
-        nodeMap[x.name] = x;
-      });
-      graph.links = graph.links.map(function (x) {
-        return {
-          source: nodeMap[x.source],
-          target: nodeMap[x.target],
-          value: x.value,
-        };
-      });
 
-      sankey.nodes(graph.nodes).links(graph.links).layout(32);
+    sankey.nodes(sankeyChartData.nodes).links(sankeyChartData.links).layout(32);
 
-      // add in the links
-      var link = svg
-        .append("g")
-        .selectAll(".link")
-        .data(graph.links)
-        .enter()
-        .append("path")
-        .attr("class", "link")
-        .attr("d", path)
-        .style("stroke-width", function (d) {
-          return Math.max(1, d.dy);
-        })
-        .sort(function (a, b) {
-          return b.dy - a.dy;
-        });
-
-      // add the link titles
-      link.append("title").text(function (d) {
-        return d.source.name + " → " + d.target.name + "\n" + format(d.value);
+    // add in the links
+    var link = svg
+      .append("g")
+      .selectAll(".link")
+      .data(sankeyChartData.links)
+      .enter()
+      .append("path")
+      .attr("class", "link")
+      .attr("d", path)
+      .style("stroke-width", function (d) {
+        return Math.max(1, d.dy);
+      })
+      .sort(function (a, b) {
+        return b.dy - a.dy;
       });
 
-      // add in the nodes
-      var node = svg
-        .append("g")
-        .selectAll(".node")
-        .data(graph.nodes)
-        .enter()
-        .append("g")
-        .attr("class", "node")
-        .attr("transform", function (d) {
-          return "translate(" + d.x + "," + d.y + ")";
-        })
-        .call(
-          d3
-            .drag()
-            .subject(function (d) {
-              return d;
-            })
-            .on("start", function () {
-              this.parentNode.appendChild(this);
-            })
-            .on("drag", dragmove)
-        );
-
-      // add the rectangles for the nodes
-      node
-        .append("rect")
-        .attr("height", function (d) {
-          return d.dy;
-        })
-        .attr("width", sankey.nodeWidth())
-        .style("fill", function (d) {
-          return (d.color = color(d.name.replace(/ .*/, "")));
-        })
-        .style("stroke", function (d) {
-          return d3.rgb(d.color).darker(2);
-        })
-        .append("title")
-        .text(function (d) {
-          return d.name + "\n" + format(d.value);
-        });
-
-      // add in the title for the nodes
-      node
-        .append("text")
-        .attr("x", -6)
-        .attr("y", function (d) {
-          return d.dy / 2;
-        })
-        .attr("dy", ".35em")
-        .attr("text-anchor", "end")
-        .attr("transform", null)
-        .text(function (d) {
-          return d.name;
-        })
-        .filter(function (d) {
-          return d.x < width / 2;
-        })
-        .attr("x", 6 + sankey.nodeWidth())
-        .attr("text-anchor", "start");
-
-      // the function for moving the nodes
-      function dragmove(event, d) {
-        d3.select(this).attr(
-          "transform",
-          "translate(" +
-            (d.x = Math.max(0, Math.min(width - d.dx, event.x))) +
-            "," +
-            (d.y = Math.max(0, Math.min(height - d.dy, event.y))) +
-            ")"
-        );
-        sankey.relayout();
-        link.attr("d", path);
-      }
+    // add the link titles
+    link.append("title").text(function (d) {
+      return d.source.name + " → " + d.target.name + "\n" + format(d.value);
     });
+
+    // add in the nodes
+    var node = svg
+      .append("g")
+      .selectAll(".node")
+      .data(sankeyChartData.nodes)
+      .enter()
+      .append("g")
+      .attr("class", "node")
+      .attr("transform", function (d) {
+        return "translate(" + d.x + "," + d.y + ")";
+      })
+      .call(
+        d3
+          .drag()
+          .subject(function (d) {
+            return d;
+          })
+          .on("start", function () {
+            this.parentNode.appendChild(this);
+          })
+          .on("drag", dragmove)
+      );
+
+    // add the rectangles for the nodes
+    node
+      .append("rect")
+      .attr("height", function (d) {
+        return d.dy;
+      })
+      .attr("width", sankey.nodeWidth())
+      .style("fill", function (d) {
+        return (d.color = color(d.name.replace(/ .*/, "")));
+      })
+      .style("stroke", function (d) {
+        return d3.rgb(d.color).darker(2);
+      })
+      .append("title")
+      .text(function (d) {
+        return d.name + "\n" + format(d.value);
+      });
+
+    // add in the title for the nodes
+    node
+      .append("text")
+      .attr("x", -6)
+      .attr("y", function (d) {
+        return d.dy / 2;
+      })
+      .attr("dy", ".35em")
+      .attr("text-anchor", "end")
+      .attr("transform", null)
+      .text(function (d) {
+        return d.name;
+      })
+      .filter(function (d) {
+        return d.x < width / 2;
+      })
+      .attr("x", 6 + sankey.nodeWidth())
+      .attr("text-anchor", "start");
+
+    // the function for moving the nodes
+    function dragmove(event, d) {
+      d3.select(this).attr(
+        "transform",
+        "translate(" +
+          (d.x = Math.max(0, Math.min(width - d.dx, event.x))) +
+          "," +
+          (d.y = Math.max(0, Math.min(height - d.dy, event.y))) +
+          ")"
+      );
+      sankey.relayout();
+      link.attr("d", path);
+    }
   };
 
   return <p id="chart"></p>;
